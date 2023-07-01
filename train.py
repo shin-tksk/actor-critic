@@ -5,9 +5,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import os
-#from JSAnimation.IPython_display import display_animation
 from matplotlib import animation
-#from IPython.display import display
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 
