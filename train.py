@@ -9,18 +9,6 @@ from matplotlib import animation
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 
-def display_frames_as_gif(frames):
-    plt.figure(figsize=(frames[0].shape[1]/72.0, frames[0].shape[0]/72.0), dpi=72)
-    patch = plt.imshow(frames[0])
-    plt.axis('off')
-
-    def animate(i):
-        patch.set_data(frames[i])
-
-    anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=50)
-    anim.save('3_2movie_cartpole.gif')  # 動画を保存
-
-
 # Configuration parameters for the whole setup
 seed = 42
 gamma = 0.99  # Discount factor for past rewards
@@ -56,8 +44,6 @@ while True:  # Run until solved
     episode_reward = 0
     with tf.GradientTape() as tape:
         for timestep in range(1, max_steps_per_episode):
-            # env.render(); Adding this line would show the attempts
-            # of the agent in a pop up window.
             state = tf.convert_to_tensor(state)
             state = tf.expand_dims(state, 0)
 
