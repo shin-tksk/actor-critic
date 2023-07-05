@@ -6,6 +6,7 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import os
 from matplotlib import animation
+import utils
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 
@@ -125,4 +126,4 @@ while True:  # Run until solved
         break
 
 #print(frames[0].shape)
-display_frames_as_gif(frames)
+utils.display_frames_as_gif(frames)
