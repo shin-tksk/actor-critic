@@ -10,7 +10,6 @@ import utils
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 
-# Configuration parameters for the whole setup
 seed = 42
 gamma = 0.99  # Discount factor for past rewards
 max_steps_per_episode = 10000
@@ -36,48 +35,41 @@ optimizer = keras.optimizers.Adam(learning_rate=0.01)
 huber_loss = keras.losses.Huber()
 action_probs_history = []
 critic_value_history = []
-rewards_history = []
+rewards_history = [] #reward by step
 running_reward = 0
 episode_count = 0
 
 while True:  # Run until solved
-    state = env.reset()[0]
+    state = env.reset()[0] #[cart-pos, cart-speed, pole-ang, pole-speed]
     episode_reward = 0
     with tf.GradientTape() as tape:
+        #episode start
         for timestep in range(1, max_steps_per_episode):
-            state = tf.convert_to_tensor(state)
-            state = tf.expand_dims(state, 0)
+            state = tf.convert_to_tensor(state) 
+            state = tf.expand_dims(state, 0) #shape(1,4)
 
-            # Predict action probabilities and estimated future rewards
-            # from environment state
-            action_probs, critic_value = model(state)
+            action_probs, critic_value = model(state) #output[action(1,2)(left or right prob) ,critic(1,1)]
             critic_value_history.append(critic_value[0, 0])
 
             # Sample action from action probability distribution
-            action = np.random.choice(num_actions, p=np.squeeze(action_probs))
-            action_probs_history.append(tf.math.log(action_probs[0, action]))
+            action = np.random.choice(num_actions, p=np.squeeze(action_probs)) #left or right
+            action_probs_history.append(tf.math.log(action_probs[0, action])) #selected dirction log prob
 
             # Apply the sampled action in our environment
-            #print(env.step(action))
-            state, reward, done, _ = env.step(action)[:4]
+            state, reward, done, _ = env.step(action)[:4] #state(after apply action), reward(0 or 1), done(episode finished)
             rewards_history.append(reward)
             episode_reward += reward
 
             frames.append(env.render())
-            #print(env.render().shape)
+
             if done:
                 break
+        #episode finish
 
-        # Update running reward to check condition for solving
         running_reward = 0.05 * episode_reward + (1 - 0.05) * running_reward
-
-        # Calculate expected value from rewards
-        # - At each timestep what was the total reward received after that timestep
-        # - Rewards in the past are discounted by multiplying them with gamma
-        # - These are the labels for our critic
         returns = []
         discounted_sum = 0
-        for r in rewards_history[::-1]:
+        for r in rewards_history[::-1]: #where r is reward by step
             discounted_sum = r + gamma * discounted_sum
             returns.insert(0, discounted_sum)
 
