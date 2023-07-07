@@ -15,7 +15,7 @@ gamma = 0.99  # Discount factor for past rewards
 max_steps_per_episode = 10000
 env = gym.make("CartPole-v1", render_mode='rgb_array')  # Create the environment
 env.reset(seed=seed)
-eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
+eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0　丸め誤差
 frames = []
 
 # model
@@ -83,16 +83,8 @@ while True:  # Run until solved
         actor_losses = []
         critic_losses = []
         for log_prob, value, ret in history:
-            # At this point in history, the critic estimated that we would get a
-            # total reward = `value` in the future. We took an action with log probability
-            # of `log_prob` and ended up recieving a total reward = `ret`.
-            # The actor must be updated so that it predicts an action that leads to
-            # high rewards (compared to critic's estimate) with high probability.
             diff = ret - value
             actor_losses.append(-log_prob * diff)  # actor loss
-
-            # The critic must be updated so that it predicts a better estimate of
-            # the future rewards.
             critic_losses.append(
                 huber_loss(tf.expand_dims(value, 0), tf.expand_dims(ret, 0))
             )
@@ -117,5 +109,4 @@ while True:  # Run until solved
         print("Solved at episode {}!".format(episode_count))
         break
 
-#print(frames[0].shape)
 utils.display_frames_as_gif(frames)
