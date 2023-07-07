@@ -62,12 +62,12 @@ for epi in range(1,episode+1):
                 break
         #episode finish
         #running_reward = 0.05 * episode_reward + (1 - 0.05) * running_reward
+
         returns = [] #Cumulative reward
         discounted_sum = 0
         for r in rewards_history[::-1]: #where r is reward by step
             discounted_sum = r + gamma * discounted_sum
             returns.insert(0, discounted_sum)
-
         # Normalize
         returns = np.array(returns)
         returns = (returns - np.mean(returns)) / (np.std(returns) + eps)
@@ -85,7 +85,7 @@ for epi in range(1,episode+1):
             )
 
         # Backpropagation
-        loss_value = sum(actor_losses) + sum(critic_losses)
+        loss_value = sum(actor_losses)/len(actor_losses) + sum(critic_losses)/len(critic_losses)
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
