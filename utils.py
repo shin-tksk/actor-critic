@@ -1,5 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
 from matplotlib import animation
 
 def display_frames_as_gif(frames):
