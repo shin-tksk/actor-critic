@@ -36,13 +36,12 @@ class ActorCriticModel(tf.keras.Model):
         critic_value = self.critic(outputs)
         return action_probs, critic_value
 
-    def train_episode(self):
+    def train_episode(self, num_step):
         action_probs_history = [] #action log prob by step
         critic_value_history = [] #critic by step
         rewards_history = [] #reward by step
         state = self.env.reset()[0]
         episode_reward = 0
-        num_step = 10000
 
         with tf.GradientTape() as tape:
             for step in range(num_step):

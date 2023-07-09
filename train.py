@@ -8,7 +8,8 @@ from tensorflow.keras.optimizers import Adam
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 
 learning_rate = 0.001
-episode = 100
+episode = 1000
+num_step = 500
 save_path = 'model'
 loader_path = None
 
@@ -18,7 +19,7 @@ ac_model.compile(optimizer=opt)
 
 
 for epi in range(1,episode+1):
-    loss, reward = ac_model.train_episode()
+    loss, reward = ac_model.train_episode(num_step)
     if epi % 1 == 0:
         print('loss : {}, reward : {} at episode {}'.format(loss, reward, epi))
 
