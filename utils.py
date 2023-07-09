@@ -13,3 +13,10 @@ def display_frames_as_gif(frames):
 
     anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=50)
     anim.save('3_2movie_cartpole.gif')  # 動画を保存
+
+def huber_loss(x,y,delta):
+    dis = abs(x-y)
+    if dis <= delta:
+        return (dis**2) / 2
+    else:
+        return (delta * dis) - (delta**2) / 2
