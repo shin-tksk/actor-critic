@@ -1,12 +1,18 @@
 import gym
 import numpy as np
-import tensorflow as tf
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+import tensorflow as tf
+tf.get_logger().setLevel("ERROR")
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"]= "true"
 import utils
 import json
 
+
+
+
 class ActorCriticModel(tf.keras.Model):
-    def __init__(self, num_hidden=256, num_inputs=4, num_actions=2, loader_path=None, env=None, gamma=0.99, learning_rate=0.001):
+    def __init__(self, num_hidden=128, num_inputs=4, num_actions=2, loader_path=None, env=None, gamma=0.99, learning_rate=0.001):
         super(ActorCriticModel, self).__init__()
 
         if loader_path is not None:
@@ -21,7 +27,8 @@ class ActorCriticModel(tf.keras.Model):
         self.env.reset(seed=42)
         self.eps = np.finfo(np.float32).eps.item() # 丸め誤差
 
-        self.common = tf.keras.layers.Dense(self.num_hidden, activation="relu")
+        self.common1 = tf.keras.layers.Dense(self.num_hidden, activation="relu")
+        self.common2 = tf.keras.layers.Dense(self.num_hidden//2, activation="relu")
         self.action = tf.keras.layers.Dense(self.num_actions, activation="softmax")
         self.critic = tf.keras.layers.Dense(1)
 
@@ -31,9 +38,10 @@ class ActorCriticModel(tf.keras.Model):
     def call(self, state):
         state = tf.convert_to_tensor(state) 
         state = tf.expand_dims(state, 0) #shape(1,4)
-        outputs = self.common(state)
-        action_probs = self.action(outputs)
-        critic_value = self.critic(outputs)
+        out1 = self.common1(state)
+        out2 = self.common2(out1)
+        action_probs = self.action(out2)
+        critic_value = self.critic(out2)
         return action_probs, critic_value
 
     def train_episode(self, num_step):
@@ -58,6 +66,7 @@ class ActorCriticModel(tf.keras.Model):
             for r in rewards_history[::-1]: #where r is reward by step
                 discounted_sum = r + self.gamma * discounted_sum
                 returns.insert(0, discounted_sum)
+
             # Normalize
             returns = np.array(returns)
             returns = (returns - np.mean(returns)) / (np.std(returns) + self.eps)
@@ -68,15 +77,17 @@ class ActorCriticModel(tf.keras.Model):
             critic_losses = []
             for log_prob, value, ret in history:
                 diff = ret - value
-                actor_losses.append(-log_prob * diff)  # actor loss
-                critic_losses.append(utils.huber_loss(tf.expand_dims(value, 0), tf.expand_dims(ret, 0), delta=1.0))
-            
+                a_loss = -log_prob * diff 
+                c_loss = utils.huber_loss(tf.expand_dims(value, 0), tf.expand_dims(ret, 0), delta=1.0)
+                actor_losses.append(a_loss)  # actor loss
+                critic_losses.append(c_loss)
+            actor_loss = sum(actor_losses) / len(actor_losses)
+            critic_loss = sum(critic_losses) / len(critic_losses)
+
             # Backpropagation
-            actor_loss = sum(actor_losses)
-            critic_loss = sum(critic_losses)
             self.loss_value = actor_loss + critic_loss
-            self.grads = tape.gradient(self.loss_value, self.trainable_variables)
-            self.optimizer.apply_gradients(zip(self.grads, self.trainable_variables))
+            gradients = tape.gradient(self.loss_value, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
         return self.loss_value[0], episode_reward
 
@@ -86,6 +97,19 @@ class ActorCriticModel(tf.keras.Model):
         log_action_probs = tf.math.log(action_probs[0, action])
         state, reward, done, _ = self.env.step(action)[:4] 
         return state, reward, done, log_action_probs, critic_value
+
+    def test(self, num_step):
+        state = self.env.reset()[0]
+        for step in range(num_step):
+            action_probs, _ = self.call(state)
+            action = np.random.choice(self.num_actions, p=np.squeeze(action_probs)) 
+            state, reward, done, _ = self.env.step(action)[:4] 
+            if done:
+                #print(state)
+                print('game over, {} steps'.format(step))
+                return 0
+        print('game clear!')
+        return 1
 
     def get_config(self):
         config = {}
