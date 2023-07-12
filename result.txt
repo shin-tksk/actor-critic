@@ -1,4 +1,4 @@
 adam 
-    episode 347, reward 309.2
+    episode 347, reward 309.2, clear 67%
 radam
-    episode 319, reward 338.2
+    episode 319, reward 338.2, clear 76%
